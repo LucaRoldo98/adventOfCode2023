@@ -1,63 +1,40 @@
-from heapq import heappop, heappush
-
 filename = "input.txt"
 
-map = []
-sr = sc = -1
-er = ec = -1
+posVel = []
 
 with open(filename) as text:
     for i,row in enumerate(text):
-        map.append(list(row.strip()))
-                
-nRows = len(map)
-nCols = len(map[0])
+        x = row.strip().split(" @ ")
+        pos = list(map(int, x[0].split(",")))
+        vel = list(map(int, x[1].split(",")))
+        posVel.append((pos,vel))
+
+collideArea = (200000000000000,400000000000000)
+
+count = 0
+
+for i in range(len(posVel) - 2):
+    pos1, vel1 = posVel[i]
+    x1, y1, _ = pos1
+    vx1, vy1, _ = vel1
         
-for j,ch in enumerate(map[0]):
-    if ch == ".":
-        sr, sc = (0,j)
-        break
-    
-for j,ch in enumerate(map[nRows - 1]):
-    if ch == ".":
-        er, ec = (nRows - 1,j)
-        break
+    for j in range(i+1, len(posVel) - 1):
+        pos2, vel2 = posVel[j]
+        x2, y2, _ = pos2
+        vx2, vy2, _ = vel2
+        
+        if vx1 * vy2 - vy1 * vx2 == 0:
+            continue
+        
+        s = (vx1 * (y1 - y2) + vy1 * x2 - vy1 * x1) / (vx1 * vy2 - vy1 * vx2)
+        t = (x2 - x1 + vx2 * s) / vx1
+
+        x = x1 + vx1 * t
+        y = y1 + vy1 * t
+        
+        if s > 0 and t > 0 and collideArea[0] <= x <= collideArea[1] and collideArea[0] <= y <= collideArea[1]:
+            count += 1
             
-pq = [(0, sr, sc, set())]
-dirs = [(-1, 0), (0,1), (1,0), (0,-1)]
-
-pathLengths = []
-
-while pq:
-    
-    distance, r, c, visited = heappop(pq)
-    
-    if (r,c) in visited:
-        continue
-    
-    if (r,c) == (er, ec):
-        pathLengths.append(distance)
-        continue
-    
-    
-    newVisited = visited.copy()
-    newVisited.add((r,c))
-    
-    if map[r][c] == ">":
-        heappush(pq, (distance + 1, r, c + 1, newVisited))
-    elif map[r][c] == "v":
-        heappush(pq, (distance + 1, r + 1, c, newVisited))
-    elif map[r][c] == "<":
-        heappush(pq, (distance + 1, r, c - 1, newVisited))
-    elif map[r][c] == "^":
-        heappush(pq, (distance + 1, r - 1, c, newVisited))
-    else:
-        for dr, dc in dirs:
-            nr, nc = r + dr, c + dc
-            if nr < 0 or nr >= nRows or nc < 0 or nc >= nCols or map[nr][nc] == "#" or (nr,nc) in visited:
-                continue
-            heappush(pq, (distance + 1, nr, nc, newVisited))
+print(count)
         
-print(pathLengths) 
-print(max(pathLengths))           
         
